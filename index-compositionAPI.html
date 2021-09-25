@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-wEmeIV1mKuiNpC+IOBjI7aAzPcEZeedi5yW5f2yOq55WWLwNGmvvx4Um1vskeMj0" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #00423E;
+            color: #00423E;
+        }
+
+        .container {
+            max-width: 800px;
+        }
+
+        h1 {
+            font-family: 'Fredoka One', cursive;
+            letter-spacing: 2px;
+        }
+
+        .completed {
+            text-decoration: line-through;
+        }
+
+        .color-primary {
+            color: #00423E;
+            transition: all .2s ease;
+        }
+
+        .color-primary:hover {
+            color: #001C1B;
+            transition: all .2s ease;
+        }
+
+        .color-secondary {
+            color: #F86D53;
+            transition: all .2s ease;
+        }
+
+        .color-secondary:hover {
+            color: #D14126;
+            transition: all .2s ease;
+        }
+
+        .btn-primary {
+            border-color: #00423E;
+            background-color: #00423E;
+        }
+
+        .btn-primary:hover,
+        .btn-primary:focus,
+        .btn-primary:active {
+            border-color: #001C1B;
+            background-color: #001C1B;
+        }
+
+        .btn-secondary {
+            border-color: #F86D53;
+            background-color: #F86D53;
+        }
+
+        .btn-secondary:hover,
+        .btn-check:active+.btn-secondary,
+        .btn-check:checked+.btn-secondary,
+        .btn-secondary.active,
+        .btn-secondary:active,
+        .show>.btn-secondary.dropdown-toggle {
+            border-color: #D14126;
+            background-color: #D14126;
+        }
+
+        .btn-outline-secondary {
+            border-color: #00423E;
+            color: #00423E;
+        }
+
+        .btn-outline-secondary:hover {
+            border-color: #00423E;
+            background-color: #00423E;
+            color: #fff;
+        }
+
+        .card-footer {
+            background-color: #F86D53;
+        }
+
+        .dele {
+            text-decoration: line-through;
+        }
+
+        .editItem input {
+            width: 20rem;
+        }
+
+        i,
+        i::after,
+        i::before {
+            line-height: 0;
+        }
+
+        @media (max-width: 375px) {
+            .card-header .btn {
+                font-size: .8rem;
+                padding: .2rem .6rem;
+            }
+
+            .editItem input {
+                width: 9rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div class="container my-5">
+            <h1 class="text-white text-center mb-3">TODO LIST</h1>
+            <div class="createItem position-relative mb-3">
+                <input @keyup.enter="createItem" class="border-0 rounded-3 w-100 p-3" type="text" placeholder="請輸入代辦事項"
+                    v-model="newTodo">
+                <button @click="createItem" type="button" class="btn position-absolute top-50 end-0 translate-middle-y">
+                    <i class="bi bi-plus-circle-fill fs-2 color-secondary" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="card my-2 rounded-3 border-0">
+                <div class="card-header">
+                    <ul class="d-flex list-unstyled align-items-center justify-content-center  mb-0">
+                        <li @click="visibility='all'" class="m-1"><a href="#" class="btn btn-secondary rounded-pill"
+                                :class="{active:visibility==='all'}">全部</a></li>
+                        <li @click="visibility='undone'" class="m-1"><a href="#" class="btn btn-secondary rounded-pill"
+                                :class="{active:visibility==='undone'}">未完成</a></li>
+                        <li @click="visibility='completed'" class="m-1"><a href="#"
+                                class="btn btn-secondary rounded-pill"
+                                :class="{active:visibility==='completed'}">已完成</a></li>
+                        <li><a href="#" class="btn btn-outline-secondary rounded-pill m-1" data-bs-toggle="modal"
+                                data-bs-target="#deleConfirmModal">清除</a></li>
+                    </ul>
+
+                    <!-- 確定要清除所有任務 -->
+                    <div class="modal fade" id="deleConfirmModal" tabindex="-1" aria-labelledby="deleConfirmModalLabel"
+                        aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="deleConfirmModalLabel">確定要清除所有任務?</h5>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary rounded-pill"
+                                        data-bs-dismiss="modal">取消</button>
+                                    <button @click="deleAll" type="button"
+                                        class="btn btn-primary rounded-pill">確定清除</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="d-flex border-bottom justify-content-between align-items-center py-2"
+                            v-for="item in filterData" :key="item.id">
+                            <!-- 任務清單 -->
+                            <div class="listItem" v-if="!item.editStatus">
+                                <input @click="check(item)" :id="item.id" class="form-check-input me-3" type="checkbox"
+                                    v-model="item.isCompleted">
+                                <label :for="item.id" :class="{dele:item.isCompleted}">{{ item.todoItem }}</label>
+                            </div>
+                            <!-- 編輯文字框 -->
+                            <div class="editItem" v-else>
+                                <input @keyup.enter="editDone(item)" id="edit" type="text" class="rounded-3 px-2 py-1"
+                                    v-model='item.temp'>
+                                <!-- 編輯完成按鈕 -->
+                                <a href="#" @click="editDone(item)" class="link-secondary p-1 me-1">
+                                    <i class="bi bi-check fs-2 color-primary" aria-hidden="true"></i>
+                                </a>
+                            </div>
+                            <!-- 編輯按鈕區 -->
+                            <div class="editBtn d-flex align-items-center">
+                                <!-- 編輯按鈕 -->
+                                <a href="#edit" @click="editItem(item)" class="link-secondary p-1 me-1">
+                                    <i class="bi bi-pencil color-primary" aria-hidden="true"></i>
+                                </a>
+                                <!-- 刪除按鈕 -->
+                                <a href="#" @click="deleItem(item)" class="link-secondary p-1 me-1">
+                                    <i class="bi bi-x fs-2 color-primary" aria-hidden="true"></i>
+                                </a>
+                            </div>
+                        </li>
+
+                    </ul>
+                </div>
+                <div class="card-footer text-center text-white py-3">你有 {{ todoNum }} 筆任務</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-p34f1UUtsS3wqzfto5wAAmdvj+osOnFyQFpp4Ua3gs/ZVWx6oOypYoCJhGGScy+8"
+        crossorigin="anonymous"></script>
+    <script type="module">
+        import { createApp, ref, onMounted, computed } from 'https://cdnjs.cloudflare.com/ajax/libs/vue/3.2.0-beta.8/vue.esm-browser.prod.min.js';
+        const app = createApp({
+            setup() {
+                const todoList = ref([]);
+                const storageKey = ref('myTodo');
+                const visibility = ref('all');
+
+                // 儲存暫存
+                const updateStorage = () => {
+                    todoList.value = JSON.stringify(todoList.value);
+                    localStorage.setItem(storageKey.value, todoList.value);
+                }
+                // 讀取待辦
+                const init = () => {
+                    let data = localStorage.getItem(storageKey.value);
+                    data = JSON.parse(data);
+                    if (data) {
+                        todoList.value = data;
+                    }
+                }
+                // 新增待辦
+                const newTodo = ref('');
+                const createItem = () => {
+                    if (newTodo.value === '') {
+                        alert("請輸入代辦事項");
+                        return;
+                    } else {
+                        todoList.value.push({
+                            id: Date.now(),
+                            todoItem: newTodo.value,
+                            isCompleted: false,
+                            editStatus: false,
+                            temp: {}
+                        });
+                        newTodo.value = '';
+                        visibility.value = 'all';
+                        updateStorage();
+                        init();
+                    };
+                }
+                // 刪除待辦
+                const deleItem = (item) => {
+                    const index = todoList.value.findIndex(obj => obj.id == item.id)
+                    todoList.value.splice(index, 1);
+                    updateStorage();
+                    init();
+                };
+                // 編輯待辦
+                const editItem = (item) => {
+                    item.temp = item.todoItem;
+                    item.editStatus = !item.editStatus;
+                };
+                // 編輯完成
+                const editDone = (item) => {
+                    item.todoItem = item.temp;
+                    item.editStatus = false;
+                    updateStorage();
+                    init();
+                }
+                // 打勾完成
+                const check = (item) => {
+                    item.isCompleted = !item.isCompleted;
+                    updateStorage();
+                    init();
+                }
+                // 刪除全部
+                const deleAll = () => {
+                    todoList.value = [];
+                    visibility.value = 'all';
+                    $('#deleConfirmModal').modal('hide');
+                    updateStorage();
+                    init();
+                }
+
+                const todoNum = computed(() => {
+                    return todoList.value.length;
+                })
+                const filterData = computed(() => {
+                    switch (visibility.value) {
+                        case 'undone':
+                            return todoList.value.filter(obj => !obj.isCompleted);
+                        case 'completed':
+                            return todoList.value.filter(obj => obj.isCompleted);
+                        default:
+                            return todoList.value;
+                    }
+                });
+
+                onMounted(() => {
+                    init()
+                })
+                return {
+                    newTodo,
+                    todoList,
+                    storageKey,
+                    visibility,
+                    // methods
+                    createItem,
+                    deleItem,
+                    editItem,
+                    editDone,
+                    check,
+                    deleAll,
+                    updateStorage,
+                    init,
+                    //computed
+                    todoNum,
+                    filterData,
+                }
+
+            }
+        });
+        app.mount('#app');
+    </script>
+</body>
+
+</html>
